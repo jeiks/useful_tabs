@@ -1,0 +1,158 @@
+<!doctype html>
+<html lang='pt-BR'>
+  <head>
+    <meta charset="UTF-8">
+    <title></title>
+    <link rel="stylesheet" type="text/css" href="normalize-7.0.0.css">
+    <script src="prefixfree-1.0.7.js"></script>
+    <!-- <script src="jquery-3.2.1.min.js "></script> -->
+     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+    <script>
+    $(function() {
+        function getURLs() {
+            var urls = $('.desc_and_url'), count=0;
+            ret = {};
+            for (var i=0; i<urls.length; i++) {
+                var inps = $(urls[i]).find('input');
+                if (inps.length > 0){
+                    if (inps[1].value != '')
+                        ret[count++] = {'desc': inps[0].value,
+                                        'url' : inps[1].value};
+                }else{
+                    ret[count++] = {'desc': $(urls[i]).find('label').text(),
+                                    'url' : $(urls[i]).find('a').attr('href')};
+                }
+            }
+            return JSON.stringify(ret);
+        }
+        function download(filename) {
+            var pom = document.createElement('a'),
+                text = getURLs();
+            if (text=='{}') return;
+            pom.setAttribute('href', 'data:text/plain;charset=utf-8,' + encodeURIComponent(text));
+            pom.setAttribute('download', filename);
+
+            if (document.createEvent) {
+                var event = document.createEvent('MouseEvents');
+                event.initEvent('click', true, true);
+                pom.dispatchEvent(event);
+            }
+            else {
+                pom.click();
+            }
+        }
+
+        function new_item(i1_text='', i2_text='') {
+            var l1 = $('<label>').text('Site description:').addClass('label_col1'),
+                l2 = $('<label>').text('URL:').addClass('label_col2'),
+                i1 = $('<input>').addClass('input_col1').val(i1_text),
+                i1_a = $('<label>').addClass('input_col1').text(i1_text).css(
+                        {'margin-right': '5px', 'margin-left':'10px'}),
+                i2 = $('<input>').addClass('input_col2').val(i2_text),
+                i2_a = $('<a>').addClass('input_col2').attr(
+                        {'href': i2_text, 'target':'_blank'}).css(
+                        {'text-decoration':'none', 'font-size':'20px'}).text('⮚'),
+                d = $('<div>').addClass('desc_and_url'),
+                edit = $('<button>E</button>').css(
+                        {'margin-left':'10px',
+                         'display': 'inline-block'}).click( function() {edit_me(this);});
+                del_div = $('<button>X</button>').css(
+                        {'margin-left':'10px',
+                            'display': 'inline-block'}).click(function() {remove_me(this);});
+            if (i2_text == '')
+                $('#urls').append( d.append(l1, i1, l2, i2, del_div) );
+            else
+                $('#urls').append( d.append(del_div, i1_a, i2_a) );
+                
+        }
+        function remove_me(obj){
+            var p = $(obj).parent(),
+                url = $(p).find('input');
+            if (url.length > 0) url = url[1].value;
+            else url = '';
+
+            if (confirm('Are you sure to remove '+((url != '')?'URL "'+url+'"':'this URL')+'?'))
+                p.remove();
+        }
+        function button_add() {
+            var b1 = $('<button>').
+                      text('Add new line').
+                      click( function (){new_item();} ).
+                      attr('id','button_new_line').
+                      css({'margin-left': '10px', 'display':'inline-block'}),
+                b2 = $('<button>').
+                      text('Save to file').
+                      click(function() { download('site_list.txt');} ).
+                      css({'margin-left': '10px', 'display':'inline-block'});
+                     
+            return $('<div>').append(b1, b2);
+        }
+        function parse_json_urls(content) {
+            var cont = JSON.parse(content);
+            for (var x in cont) {
+                new_item(cont[x]['desc'], cont[x]['url']);
+            }
+        }
+        function load_urls(evt) {
+            var files = evt.target.files, ok = false;
+            for (var i = 0, f; f = files[i]; i++) {
+                var reader = new FileReader();
+                reader.onload = (function(theFile) {
+                    return function(e) {
+                        var content = e.target.result;
+                        if (content) {
+                            ok = parse_json_urls(content);
+                        }else{
+                            console.log('no content');
+                        };
+                    }})(f);
+                reader.readAsText(f);
+                }
+        }
+        $('#button_new').click(
+            function() {
+                $('#button_new').hide();
+                $('#button_load').hide();
+                new_item();
+                $('body').append( button_add() );
+            }
+        );
+        $('#button_load').click(
+            function() {
+                $('#files').click();
+            }
+        );
+        $('#files').change(
+            function(evt) {
+                load_urls(evt);
+                $('#button_new').hide();
+                $('#button_load').hide();
+                $('body').append( button_add() );
+            }
+        );
+    });
+    </script>
+    <style>
+        body{ background-image: url('noise.png'); margin-top:10px; margin-left: 10px;}
+        .label_col1 { display: inline-block; width: 155px; }
+        .label_col2 { display: inline-block; width: 50px; }
+        .label_col1, .label_col2 { margin: 10px; }
+        .input_col1, .input_col2 { width: 400px; }
+         /* unvisited link */
+        a:link, a:visited, a:hover, a:active {
+            color: darkblue;
+        }
+        .desc_and_url {margin: 0px;}
+/*         * {border: 1px solid black; */
+    </style>
+  </head>
+  
+  <body>
+    <p>Just saving some use<i>ful</i>(<i>less</i>) links...</p>
+    <p style='font-style: italic; font-size: 12px;'>to return to main page, <a href='javascript:location.reload()'>press F5</a>.</p>
+    <div id='urls'></div>
+    <button id='button_new'>Create new site list</button>
+    <button id='button_load'>Load site list</button>
+    <input  id='files' style='visibility:hidden;' type='file' name='files[]' multiple="multiple">
+  </body>
+</html>
