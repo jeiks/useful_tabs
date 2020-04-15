@@ -1,7 +1,7 @@
 # Just saving useFUL(less) browser tabs to free up memory
 ## and clearing my desktop (it's better for my eyes.. lol)
 
-I got myself with many browser windows open om my desktop. But many links already open will not be used again or will open in a new browser window.
+I got myself with many browser windows open on my desktop. But many links already open will not be used again or will open in a new browser window.
 
 But we can't close them, right? We always feel we are losing something important.
 
